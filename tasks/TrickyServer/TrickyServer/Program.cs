@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
+using System.Text;
 
 namespace TrickyServer
 {
@@ -18,54 +20,65 @@ namespace TrickyServer
 
 				server.Start();
 
-				
-				var buffer = new Byte[BufferSize];
-				String data = null;
-
 				while (true)
 				{
 					Console.Write("Waiting for a connection... ");
 
-					var client = server.AcceptTcpClient();
+					var socket = server.AcceptSocket();
 					Console.WriteLine("Connected!");
 
-					data = null;
+					var request = ReceiveRequest(socket);
+					Console.WriteLine("Request from client: {0}", request);
 
-					NetworkStream stream = client.GetStream();
+					var response = HandleRequest(request);
+					Console.WriteLine("Server's response: {0}", response);
+					SendResponse(socket, response);
 
-					int i;
-
-					while ((i = stream.Read(buffer, 0, buffer.Length)) != 0)
-					{
-						data = System.Text.Encoding.ASCII.GetString(buffer, 0, i);
-						Console.WriteLine("Received: {0}", data);
-
-						var response = GetResponse(data);
-
-						byte[] msg = System.Text.Encoding.ASCII.GetBytes(response);
-
-						stream.Write(msg, 0, msg.Length);
-						Console.WriteLine("Sent: {0}", response);
-					}
-
-					client.Close();
+					socket.Close();
 				}
 			}
-			catch (SocketException e)
+			catch (Exception e)
 			{
-				Console.WriteLine("SocketException: {0}", e);
+				Console.WriteLine("Exception: {0}", e);
 			}
 			finally
 			{
-				server.Stop();
+				if (server != null) server.Stop();
 			}
 		}
 
-		private static string GetResponse(string data)
+		private static string ReceiveRequest(Socket socket)
 		{
-			throw new NotImplementedException();
+			var bytes = new byte[BufferSize];
+			var bytesOffset = socket.Receive(bytes, bytes.Length, SocketFlags.None);
+			return bytesOffset < 0 ? "" : Encoding.ASCII.GetString(bytes, 0, bytesOffset);
 		}
 
-		const int BufferSize = 256;
+		private static void SendResponse(Socket s, string response)
+		{
+			var bytes = new byte[BufferSize];
+			var contentLengh = 0;
+
+			//todo
+			contentLengh = Encoding.UTF8.GetBytes(response, 0, response.Length, bytes, 0);
+
+			var offset = 0;
+			while (true)
+			{
+				var bytesWrite = s.Send(bytes, offset, contentLengh - offset, SocketFlags.None);
+				offset += bytesWrite;
+				if (offset == contentLengh) return;
+			}
+		}
+
+		private static string HandleRequest(string data)
+		{
+			//todo
+			return data;
+		}
+
+		public List<string> storedFilesHashes = new List<string>();
+
+		const int BufferSize = 1 * 1024 * 1024;
 	}
 }

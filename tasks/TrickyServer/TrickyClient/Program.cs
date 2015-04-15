@@ -14,43 +14,42 @@ namespace TrickyClient
 				var server = args.Length > 1 ? args[1] : "127.0.0.1";
 				var client = new TcpClient(server, port);
 
-				var message = "";
-				
-				Byte[] data = Encoding.ASCII.GetBytes(message);
+				MakeTestCaseCommunication(client);
 
-				NetworkStream stream = client.GetStream();
-
-				
-				stream.Write(data, 0, data.Length);
-
-				Console.WriteLine("Sent: {0}", message);
-
-				
-				var buffer = new Byte[BufferSize];
-
-				// String to store the response ASCII representation.
-				String responseData = String.Empty;
-
-				// Read the first batch of the TcpServer response bytes.
-				Int32 bytes = stream.Read(buffer, 0, buffer.Length);
-				responseData = Encoding.ASCII.GetString(data, 0, bytes);
-				Console.WriteLine("Received: {0}", responseData);
-
-				// Close everything.
-				stream.Close();
 				client.Close();
 			}
-			catch (ArgumentNullException e)
+			catch (Exception e)
 			{
-				Console.WriteLine("ArgumentNullException: {0}", e);
-			}
-			catch (SocketException e)
-			{
-				Console.WriteLine("SocketException: {0}", e);
+				Console.WriteLine("Exception: {0}", e);
 			}
 
-			Console.WriteLine("\n Press Enter to continue...");
 			Console.Read();
+		}
+
+		private static void MakeTestCaseCommunication(TcpClient client)
+		{
+			var message = "Test message";
+
+			Byte[] data = Encoding.ASCII.GetBytes(message);
+
+			NetworkStream stream = client.GetStream();
+
+
+			stream.Write(data, 0, data.Length);
+
+			Console.WriteLine("Sent: {0}", message);
+
+
+			var buffer = new Byte[BufferSize];
+
+			var responseData = String.Empty;
+
+			// Read the first batch of the TcpServer response bytes.
+			Int32 bytes = stream.Read(buffer, 0, buffer.Length);
+			responseData = Encoding.ASCII.GetString(data, 0, bytes);
+			Console.WriteLine("Received: {0}", responseData);
+
+			stream.Close();
 		}
 
 		private const int BufferSize = 256;
