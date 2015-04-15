@@ -40,8 +40,6 @@ namespace Protocol
 			return new TrickyRequest(new Headers(headers), date, filename, content);
 		}
 
-		public readonly byte[] Delimiter = Encoding.ASCII.GetBytes("|-|");
-
 		public Headers Headers { get; private set; }
 		public DateTime Date;
 		public string FileName;

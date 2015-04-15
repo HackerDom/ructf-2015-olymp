@@ -32,25 +32,46 @@ namespace TrickyClient
 		{
 			var stream = client.GetStream();
 
-			const string fileName = @"../TestData/pic.jpg";
+			const string fileName1 = @"../TestData/pic.jpg";
+			const string fileName2 = @"../TestData/pic2.jpg";
 			var headers = new Headers(SerializationSchema.Custom);
 
-			var correctRequest = new TrickyRequest(headers, DateTime.Now, fileName, File.ReadAllBytes(fileName));
+			var correctRequest = new TrickyRequest(headers, DateTime.Now, fileName1, File.ReadAllBytes(fileName1));
 			SendUploadRequest(stream, correctRequest);
 			
+			GetResponse(stream);
 
-			
-			
+			var secondCorrectRequest = new TrickyRequest(headers, DateTime.Now, fileName2, File.ReadAllBytes(fileName2));
+			SendUploadRequest(stream, secondCorrectRequest);
+
+			GetResponse(stream);
+
+			var incorrectRequest = new TrickyRequest(headers, DateTime.Now, fileName1, null);
+			SendUploadRequest(stream, incorrectRequest);
+
+			GetResponse(stream);
+
+			//todo: add some trash here
+
+			SendUploadRequest(stream, correctRequest);
+			GetResponse(stream);
+
+			SendUploadRequest(stream, secondCorrectRequest);
+
+			stream.Close();
+		}
+
+		private static string GetResponse(Stream stream)
+		{
 			var buffer = new Byte[BufferSize];
 
 			var bytesRead = stream.Read(buffer, 0, buffer.Length);
 			var responseData = Encoding.ASCII.GetString(buffer, 0, bytesRead);
 			Console.WriteLine("Received: {0}", responseData);
-
-			stream.Close();
+			return responseData;
 		}
 
-		private static void SendUploadRequest(NetworkStream stream, TrickyRequest request)
+		private static void SendUploadRequest(Stream stream, TrickyRequest request)
 		{
 			stream.Write(request.ToBytes(), 0, request.ToBytes().Length);
 

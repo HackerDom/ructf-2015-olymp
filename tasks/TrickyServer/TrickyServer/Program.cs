@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
+using System.Security.Cryptography;
 using System.Text;
 using Protocol;
 
@@ -54,30 +55,39 @@ namespace TrickyServer
 			return bytesOffset < 0 ? null : TrickyRequest.FromBytes(bytes);
 		}
 
-		private static void SendResponse(Socket s, string response)
+		private static void SendResponse(Socket s, TrickyResponse response)
 		{
-			var bytes = new byte[BufferSize];
-			var contentLengh = 0;
-
-			//todo
-			contentLengh = Encoding.UTF8.GetBytes(response, 0, response.Length, bytes, 0);
+			var content = response.ToBytes();
+			var contentLengh = content.Length;
 
 			var offset = 0;
 			while (true)
 			{
-				var bytesWrite = s.Send(bytes, offset, contentLengh - offset, SocketFlags.None);
+				var bytesWrite = s.Send(content, offset, contentLengh - offset, SocketFlags.None);
 				offset += bytesWrite;
 				if (offset == contentLengh) return;
 			}
 		}
 
-		private static string HandleRequest(TrickyRequest request)
+		private static TrickyResponse HandleRequest(TrickyRequest request)
 		{
-			//todo
-			return request.FileName;
+			var hash = CalculateHash(request.FileContent);
+			if (storedFilesHashes.Contains(hash))
+				return new TrickyResponse(Status.AlreadyExists, string.Format("File with hash {0} already exists in our DB", hash),
+					Guid.Empty, DateTime.Now);
+
+			return new TrickyResponse(Status.Success, string.Format("File {0} successfully saved in our DB", request.FileName),
+				Guid.NewGuid(), DateTime.Now);
 		}
 
-		public List<string> storedFilesHashes = new List<string>();
+		private static string CalculateHash(byte[] fileContent)
+		{
+			var sha56 = SHA256Managed.Create();
+			var hash = sha56.ComputeHash(fileContent);
+			return BitConverter.ToString(hash);
+		}
+
+		public static List<string> storedFilesHashes = new List<string>();
 
 		const int BufferSize = 1 * 1024 * 1024;
 	}
