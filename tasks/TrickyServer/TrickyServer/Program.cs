@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
+using Protocol;
 
 namespace TrickyServer
 {
@@ -17,7 +18,6 @@ namespace TrickyServer
 				var localAddr = IPAddress.Parse(args.Length > 1 ? args[1] : "127.0.0.1");
 
 				server = new TcpListener(localAddr, port);
-
 				server.Start();
 
 				while (true)
@@ -47,11 +47,11 @@ namespace TrickyServer
 			}
 		}
 
-		private static string ReceiveRequest(Socket socket)
+		private static TrickyRequest ReceiveRequest(Socket socket)
 		{
 			var bytes = new byte[BufferSize];
 			var bytesOffset = socket.Receive(bytes, bytes.Length, SocketFlags.None);
-			return bytesOffset < 0 ? "" : Encoding.ASCII.GetString(bytes, 0, bytesOffset);
+			return bytesOffset < 0 ? null : TrickyRequest.FromBytes(bytes);
 		}
 
 		private static void SendResponse(Socket s, string response)
@@ -71,10 +71,10 @@ namespace TrickyServer
 			}
 		}
 
-		private static string HandleRequest(string data)
+		private static string HandleRequest(TrickyRequest request)
 		{
 			//todo
-			return data;
+			return request.FileName;
 		}
 
 		public List<string> storedFilesHashes = new List<string>();

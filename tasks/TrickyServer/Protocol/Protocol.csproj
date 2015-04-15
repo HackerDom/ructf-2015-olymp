@@ -45,6 +45,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Headers.cs" />
+    <Compile Include="Packer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TrickyRequest.cs" />
     <Compile Include="TrickyResponse.cs" />

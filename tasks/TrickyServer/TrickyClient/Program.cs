@@ -1,6 +1,8 @@
 ﻿using System;
+using System.IO;
 using System.Net.Sockets;
 using System.Text;
+using Protocol;
 
 namespace TrickyClient
 {
@@ -28,28 +30,31 @@ namespace TrickyClient
 
 		private static void MakeTestCaseCommunication(TcpClient client)
 		{
-			var message = "Test message";
+			var stream = client.GetStream();
 
-			Byte[] data = Encoding.ASCII.GetBytes(message);
+			const string fileName = @"../TestData/pic.jpg";
+			var headers = new Headers(SerializationSchema.Custom);
 
-			NetworkStream stream = client.GetStream();
+			var correctRequest = new TrickyRequest(headers, DateTime.Now, fileName, File.ReadAllBytes(fileName));
+			SendUploadRequest(stream, correctRequest);
+			
 
-
-			stream.Write(data, 0, data.Length);
-
-			Console.WriteLine("Sent: {0}", message);
-
-
+			
+			
 			var buffer = new Byte[BufferSize];
 
-			var responseData = String.Empty;
-
-			// Read the first batch of the TcpServer response bytes.
-			Int32 bytes = stream.Read(buffer, 0, buffer.Length);
-			responseData = Encoding.ASCII.GetString(data, 0, bytes);
+			var bytesRead = stream.Read(buffer, 0, buffer.Length);
+			var responseData = Encoding.ASCII.GetString(buffer, 0, bytesRead);
 			Console.WriteLine("Received: {0}", responseData);
 
 			stream.Close();
+		}
+
+		private static void SendUploadRequest(NetworkStream stream, TrickyRequest request)
+		{
+			stream.Write(request.ToBytes(), 0, request.ToBytes().Length);
+
+			Console.WriteLine("File uploaded: {0}", request.FileName);
 		}
 
 		private const int BufferSize = 256;
