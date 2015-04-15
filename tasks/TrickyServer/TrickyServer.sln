@@ -1,0 +1,32 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2012
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TrickyServer", "TrickyServer\TrickyServer.csproj", "{090B1902-D8CE-4D56-86A6-B389232A8F92}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TrickyClient", "TrickyClient\TrickyClient.csproj", "{08F11471-302E-4535-9356-181A6B663EA4}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Protocol", "Protocol\Protocol.csproj", "{53F82CF8-2AA6-4A9F-A138-53298EC87219}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{090B1902-D8CE-4D56-86A6-B389232A8F92}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{090B1902-D8CE-4D56-86A6-B389232A8F92}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{090B1902-D8CE-4D56-86A6-B389232A8F92}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{090B1902-D8CE-4D56-86A6-B389232A8F92}.Release|Any CPU.Build.0 = Release|Any CPU
+		{08F11471-302E-4535-9356-181A6B663EA4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{08F11471-302E-4535-9356-181A6B663EA4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{08F11471-302E-4535-9356-181A6B663EA4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{08F11471-302E-4535-9356-181A6B663EA4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{53F82CF8-2AA6-4A9F-A138-53298EC87219}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{53F82CF8-2AA6-4A9F-A138-53298EC87219}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{53F82CF8-2AA6-4A9F-A138-53298EC87219}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{53F82CF8-2AA6-4A9F-A138-53298EC87219}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
