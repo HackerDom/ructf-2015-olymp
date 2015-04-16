@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
 using System.Security.Cryptography;
-using System.Text;
 using Protocol;
 
 namespace TrickyServer
@@ -50,9 +49,16 @@ namespace TrickyServer
 
 		private static TrickyRequest ReceiveRequest(Socket socket)
 		{
-			var bytes = new byte[BufferSize];
-			var bytesOffset = socket.Receive(bytes, bytes.Length, SocketFlags.None);
-			return bytesOffset < 0 ? null : TrickyRequest.FromBytes(bytes);
+			try
+			{
+				var bytes = new byte[BufferSize];
+				var bytesOffset = socket.Receive(bytes, bytes.Length, SocketFlags.None);
+				return bytesOffset < 0 ? null : TrickyRequest.FromBytes(bytes);
+			}
+			catch (Exception)
+			{
+				return null;
+			}
 		}
 
 		private static void SendResponse(Socket s, TrickyResponse response)
@@ -71,13 +77,22 @@ namespace TrickyServer
 
 		private static TrickyResponse HandleRequest(TrickyRequest request)
 		{
+			try
+			{
 			var hash = CalculateHash(request.FileContent);
 			if (storedFilesHashes.Contains(hash))
 				return new TrickyResponse(Status.AlreadyExists, string.Format("File with hash {0} already exists in our DB", hash),
 					Guid.Empty, DateTime.Now);
 
+			storedFilesHashes.Add(hash);
 			return new TrickyResponse(Status.Success, string.Format("File {0} successfully saved in our DB", request.FileName),
 				Guid.NewGuid(), DateTime.Now);
+
+			}
+			catch (Exception e)
+			{
+				return new TrickyResponse(Status.Error, e.Message, Guid.Empty, DateTime.Now);
+			}
 		}
 
 		private static string CalculateHash(byte[] fileContent)

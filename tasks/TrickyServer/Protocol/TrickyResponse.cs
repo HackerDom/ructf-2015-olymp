@@ -33,13 +33,6 @@ namespace Protocol
 			var stream = new MemoryStream(bytes);
 			Packer.UnPackLabel(stream);
 			var status = Enum.Parse(typeof(Status), Encoding.ASCII.GetString(Packer.UnPackBinary(stream)), true);
-			//Status status;
-			//if (String.Equals(statusStr, Status.Success.ToString(), StringComparison.CurrentCultureIgnoreCase))
-			//	status = Status.Success;
-			//else if (String.Equals(statusStr, Status.AlreadyExists.ToString(), StringComparison.CurrentCultureIgnoreCase))
-			//	status = Status.AlreadyExists;
-			//else
-			//	status = Status.Unknown;
 			var date = DateTime.FromBinary(Packer.UnPackInt64(stream));
 			var message = Encoding.ASCII.GetString(Packer.UnPackBinary(stream));
 			var guid = Packer.UnPackGuid(stream);
@@ -55,6 +48,7 @@ namespace Protocol
 	public enum Status
 	{
 		Success,
+		Error,
 		AlreadyExists,
 		Unknown
 	}

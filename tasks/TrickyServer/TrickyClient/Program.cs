@@ -8,17 +8,17 @@ namespace TrickyClient
 {
 	class Program
 	{
+		private static int port;
+		private static string server;
+
 		static void Main(string[] args)
 		{
 			try
 			{
-				var port = args.Length > 0 ? int.Parse(args[0]) : 13000;
-				var server = args.Length > 1 ? args[1] : "127.0.0.1";
-				var client = new TcpClient(server, port);
-
-				MakeTestCaseCommunication(client);
-
-				client.Close();
+				port = args.Length > 0 ? int.Parse(args[0]) : 13000;
+				server = args.Length > 1 ? args[1] : "127.0.0.1";
+				
+				MakeTestCaseCommunication();
 			}
 			catch (Exception e)
 			{
@@ -28,54 +28,65 @@ namespace TrickyClient
 			Console.Read();
 		}
 
-		private static void MakeTestCaseCommunication(TcpClient client)
+		private static void MakeTestCaseCommunication()
 		{
-			var stream = client.GetStream();
-
 			const string fileName1 = @"../TestData/pic.jpg";
 			const string fileName2 = @"../TestData/pic2.jpg";
 			var headers = new Headers(SerializationSchema.Custom);
 
 			var correctRequest = new TrickyRequest(headers, DateTime.Now, fileName1, File.ReadAllBytes(fileName1));
-			SendUploadRequest(stream, correctRequest);
-			
-			GetResponse(stream);
+			SendRequest(correctRequest);
 
 			var secondCorrectRequest = new TrickyRequest(headers, DateTime.Now, fileName2, File.ReadAllBytes(fileName2));
-			SendUploadRequest(stream, secondCorrectRequest);
-
-			GetResponse(stream);
+			SendRequest(secondCorrectRequest);
 
 			var incorrectRequest = new TrickyRequest(headers, DateTime.Now, fileName1, null);
-			SendUploadRequest(stream, incorrectRequest);
-
-			GetResponse(stream);
+			SendRequest(incorrectRequest);
 
 			//todo: add some trash here
 
-			SendUploadRequest(stream, correctRequest);
-			GetResponse(stream);
+			SendRequest(secondCorrectRequest);
 
-			SendUploadRequest(stream, secondCorrectRequest);
-
-			stream.Close();
 		}
 
-		private static string GetResponse(Stream stream)
+		private static void SendRequest(TrickyRequest correctRequest)
+		{
+			var client = new TcpClient(server, port);
+			var stream = client.GetStream();
+			SendUploadRequest(stream, correctRequest);
+
+			GetResponse(stream);
+
+			stream.Close();
+			client.Close();
+		}
+
+		private static TrickyResponse GetResponse(Stream stream)
 		{
 			var buffer = new Byte[BufferSize];
 
 			var bytesRead = stream.Read(buffer, 0, buffer.Length);
-			var responseData = Encoding.ASCII.GetString(buffer, 0, bytesRead);
-			Console.WriteLine("Received: {0}", responseData);
-			return responseData;
+			var response = TrickyResponse.FromBytes(buffer);
+			Console.WriteLine("Received: {0}", response.Message);
+			return response;
 		}
 
 		private static void SendUploadRequest(Stream stream, TrickyRequest request)
 		{
-			stream.Write(request.ToBytes(), 0, request.ToBytes().Length);
-
-			Console.WriteLine("File uploaded: {0}", request.FileName);
+			byte[] data = {};
+			try
+			{
+				data = request.ToBytes();
+				Console.WriteLine("File uploaded: {0}", request.FileName);
+			}
+			catch (Exception)
+			{
+				data = Encoding.ASCII.GetBytes("Trash");
+			}
+			finally
+			{
+				stream.Write(data, 0, data.Length);
+			}
 		}
 
 		private const int BufferSize = 256;
