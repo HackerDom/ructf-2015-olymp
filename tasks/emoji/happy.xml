@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<quest series="password" id="password:1" proto="xmlquest-2.0">
+    <name>Password</name>
+    <task type="html" lang="en">What is the password?</task>
+    <task type="html" lang="ru">Какой пароль?</task>
+    <checker strict="yes">
+        <solution case="insensitive">saynotomdfivevivalashathree</solution>
+    </checker>
+</quest>
