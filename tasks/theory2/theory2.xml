@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<quest series="theory2" id="theory2:1" proto="xmlquest-2.0">
+    <name>Theory 2</name>
+        <task type="html" lang="ru">
+            При шифровании 5-битовой строки (все такие строки равновероятны) сначала справа приписывается 000, 001, 011 или 111 так, чтобы количество единиц в полученной 8-битовой строке стало кратно 4, а затем к полученной 8-битовой строке применяется одноразовый щит (все ключи равновероятны). Найдите вероятность успешной подмены для такого шифра.
+        </task>
+    <checker strict="yes">
+        <solution case="insensitive">5/8</solution>
+        <solution case="insensitive">0.625</solution>
+        <solution case="insensitive">0,625</solution>
+    </checker>
+</quest>
