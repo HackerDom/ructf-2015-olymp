@@ -2,12 +2,14 @@
 using System.Collections.Generic;
 using System.Net;
 using System.Threading;
+using Born2Code.Net;
 
 namespace RServer
 {
 	internal class Program
 	{
 		private static HttpListener listener;
+		private const int DownloadSpeedBytesPerSecond = 100 * 1024 / 8; // 100Kb/sec
 
 		private static void Main(string[] args)
 		{
@@ -32,7 +34,8 @@ namespace RServer
 							Console.WriteLine("Processing client {0}	{1}", context.Request.RemoteEndPoint, ctx.Request.RawUrl);
 							var response = ProcessRequest(ctx.Request);
 							var bytes = response.ToBytes();
-							ctx.Response.OutputStream.Write(bytes, 0, bytes.Length);
+							var throttledStream = new ThrottledStream(ctx.Response.OutputStream, DownloadSpeedBytesPerSecond);
+							throttledStream.Write(bytes, 0, bytes.Length);
 							Console.WriteLine("Written to client {0}	{1}", context.Request.RemoteEndPoint, ctx.Request.RawUrl);
 						}
 						finally
