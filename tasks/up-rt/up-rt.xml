@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<quest series="up-rt" id="up-rt:1" proto="xmlquest-2.0">
+    <name>up-rt</name>
+    <task type="html" lang="en">What are the things to remember after nice trip? Find the key</a></task>
+    <task type="html" lang="ru">Что вспоминается после чудной поездки? Найдите ключ</a></task>
+    <checker strict="yes">
+        <solution case="insensitive">SECRETKEY686</solution>
+    </checker>
+</quest>
