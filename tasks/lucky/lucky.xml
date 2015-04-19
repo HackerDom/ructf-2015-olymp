@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<quest series="lucky" id="lucky:1" proto="xmlquest-2.0">
+    <name>I'm feeling lucky!</name>
+    <task type="html" lang="en">Truth is out there. Find the key</a></task>
+    <task type="html" lang="ru">Истина где-то рядом. Найдите ключ</a></task>
+    <checker strict="yes">
+        <solution case="insensitive">MRGOOGLERMASTER7</solution>
+    </checker>
+</quest>
