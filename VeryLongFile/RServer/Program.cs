@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Net;
 using System.Text;
 using System.Threading;
@@ -35,10 +36,9 @@ namespace RServer
 						try
 						{
 							Console.WriteLine("Processing client {0}	{1}", context.Request.RemoteEndPoint, ctx.Request.RawUrl);
-							var response = ProcessRequest(ctx.Request);
-							var bytes = response.ToBytes();
 							var throttledStream = new ThrottledStream(ctx.Response.OutputStream, DownloadSpeedBytesPerSecond);
-							throttledStream.Write(bytes, 0, bytes.Length);
+							var range = GetRequestedRange(ctx.Request);
+							GenerateFileContent(throttledStream, range.Item1, range.Item2);
 							Console.WriteLine("Written to client {0}	{1}", context.Request.RemoteEndPoint, ctx.Request.RawUrl);
 						}
 						finally
@@ -55,11 +55,36 @@ namespace RServer
 			}
 		}
 
-		private static Response ProcessRequest(HttpListenerRequest request)
+		private static Tuple<int?, int?> GetRequestedRange(HttpListenerRequest request)
 		{
+			//todo: extract range boundaries here
+			return new Tuple<int?, int?>(null, null);
+		}
+
+		private static void GenerateFileContent(Stream stream, int? startOffset, int? endOffset)
+		{
+			if (startOffset == null && endOffset == null) return;
+			if (startOffset == null)
+				startOffset = TotalFileLength - endOffset;
+			if (endOffset == null)
+				endOffset = TotalFileLength;
+
+			var stub = new byte[(int) (endOffset - startOffset)];
 			var rand = new Random();
-			Thread.Sleep(rand.Next(5000));
-			return new Response();
+			rand.NextBytes(stub);
+
+			if (AnyHintWithinRange(startOffset, endOffset))
+				WriteHint(stream, startOffset, endOffset);
+		}
+
+		private static void WriteHint(Stream stream, int? startOffset, int? endOffset)
+		{
+			throw new NotImplementedException();
+		}
+
+		private static bool AnyHintWithinRange(int? startOffset, int? endOffset)
+		{
+			throw new NotImplementedException();
 		}
 
 		private static void InitHintsOffsets()
@@ -72,22 +97,24 @@ namespace RServer
 
 			const int minimumLastOffset = DownloadSpeedBytesPerSecond*3600*2;
 
-			var numberOfOffsets = Math.Ceiling(Math.Log(minimumLastOffset) / Math.Log(2));
+			var numberOfOffsets = (int) Math.Ceiling(Math.Log(minimumLastOffset) / Math.Log(2));
 			var spacing = Encoding.UTF8.GetBytes(FirstHints[0]).Length;
 			var rand = new Random();
 
 			for (var i = 0; i < numberOfOffsets; i++)
 			{
-				var nextOffset = (long) (spacing*Math.Pow(2, i));
+				var nextOffset = (int) (spacing*Math.Pow(2, i));
 				HintOffsets.Add(nextOffset);
 				var nextHint = i < 4 ? FirstHints[i] : HintsPool[rand.Next(HintsPool.Length)];
 				
 				Hints.Add(string.Format(nextHint, nextOffset));
 				Console.WriteLine(Hints[i]);
 			}
+
+			TotalFileLength = HintOffsets[numberOfOffsets - 1] + Encoding.UTF8.GetBytes(Hints[numberOfOffsets - 1]).Length;
 		}
 
-		private static List<long> HintOffsets = new List<long>();
+		private static List<int> HintOffsets = new List<int>();
 		private static List<string> Hints = new List<string>();
 
 		private static string[] FirstHints = new []
@@ -104,13 +131,7 @@ namespace RServer
 			"Then see {0}",
 			"Please see{0}"
 		};
-	}
 
-	public class Response
-	{
-		public byte[] ToBytes()
-		{
-			return new byte[] {};
-		}
+		private static int TotalFileLength;
 	}
 }
