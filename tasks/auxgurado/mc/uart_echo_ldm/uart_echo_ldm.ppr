@@ -1,0 +1,36 @@
+[Config]
+Compilator.SaveAll=0
+Compilator.Capture=0
+Compilator.HideOutput=0
+Compilator.LogType=0
+DefaultDir=C:\MultiClet\Projects\uart_echo_ldm
+DefaultCPIndex=0
+LogtoEnd=1
+DontOpen=0
+AbsolutePath=0
+FileFormat=0
+ProjectFilesOnly=0
+Extensions=*.*
+[Project tree]
+uart_echo_ldm
+	+uart_echo_ldm
+		7led.c
+		7led.h
+		font.h
+		main.c
+[Open project files]
+0=main.c
+1=7led.c
+2=7led.h
+[Selected Project Files]
+Main=
+Selected=main.c
+[main.c]
+TopLine=81
+Caret=37,99
+[7led.c]
+TopLine=63
+Caret=22,73
+[7led.h]
+TopLine=1
+Caret=62,6
