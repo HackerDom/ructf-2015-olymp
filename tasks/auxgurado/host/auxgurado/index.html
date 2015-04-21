@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css">
+    <title>Auxgurado</title>
+</head>
+<body>
+    <div class="panel panel-default">
+        <div class="panel-body">
+            <div class="col-md-10">
+                <p>
+                    <form action="/" method="post" role="form">
+                        <legend>Talk to <b>Auxgurado</b> — the omniscient device!</legend>
+
+                        <div class="form-group">
+                            <label for="q">Type a yes/no question: </label>
+                            <input type="text" class="form-control" name="q" id="q">
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">Ask!</button>
+                    </form>
+                </p>
+                %if answer != '':
+                <div class="alert alert-info">
+                    <b>{{answer}}</b>
+                </div>
+                %end
+            </div>
+            <div class="col-md-2">
+                <span class="badge">Powered by</span>
+                <img src="static/LDM-MCp04111-web.png" class="img-responsive" alt="Multiclet">
+            </div>
+        </div>
+
+        <div class="panel-footer">
+            <div class="footer"><a href="static/guess.asm">Download guessing module</a></div>
+        </div>
+    </div>
+</body>
+</html>
