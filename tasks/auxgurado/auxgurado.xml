@@ -1,0 +1,9 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<quest series="auxgurado" id="auxgurado:1" proto="xmlquest-2.0">
+    <name>Auxgurado</name>
+    <task type="html" lang="en"></task>
+    <task type="html" lang="ru"></task>
+    <checker strict="yes">
+        <solution case="insensitive">2bf2b9283c7d123feb5d60d031c43469</solution>
+    </checker>
+</quest>
