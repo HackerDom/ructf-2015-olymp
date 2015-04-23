@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Net;
+using System.Net.Http.Headers;
 using System.Text;
 using System.Threading.Tasks;
 using Born2Code.Net;
@@ -31,16 +33,7 @@ namespace RServer
 				log.InfoFormat("Server started listening on port {0}", port);
 				var delayMs = 0;
 
-				while (true)
-				{
-					//var timeToSleepString = Console.ReadLine();
-					//int timeToSleep;
-					//if (int.TryParse(timeToSleepString, out timeToSleep))
-					//	delayMs = timeToSleep;
-					//else
-					//	Console.WriteLine("Couldn't parse \"{0}\" as valid int.", timeToSleepString);
-					//log.InfoFormat("Delay is {0} ms", delayMs);
-				}
+				while (true) {}
 			}
 			catch (Exception e)
 			{
@@ -59,34 +52,105 @@ namespace RServer
 			context.Request.InputStream.Close();
 
 			//var throttledStream = new ThrottledStream(context.Response.OutputStream, DownloadSpeedBytesPerSecond);
-			//var range = GetRequestedRange(context.Request);
-			//GenerateFileContent(throttledStream, range.Item1, range.Item2);
-			var bytes = Encoding.UTF8.GetBytes("Gochya!");
-
-			await context.Response.OutputStream.WriteAsync(bytes, 0, bytes.Length); //todo!!
-			context.Response.OutputStream.Close();
+			var range = GetRequestedRange(context.Request);
+			await GenerateFileContent(context.Response.OutputStream, range.Item1, range.Item2);			
 		}
 
 		private static Tuple<int?, int?> GetRequestedRange(HttpListenerRequest request)
 		{
-			//todo: extract range boundaries here
-			return new Tuple<int?, int?>(null, null);
+			try
+			{
+				log.Debug(string.Join(";", request.Headers.AllKeys));
+				var rangeHeader = request.Headers.AllKeys.Contains(HttpRequestHeader.Range.ToString())
+					? request.Headers[HttpRequestHeader.Range.ToString()]
+					: "";
+
+				var res = RangeHeaderValue.Parse(rangeHeader);
+				log.Debug(string.Format("Range: {0}", res.Ranges.First().From));
+
+				//todo: поддерживаем только один диапазон?
+				return new Tuple<int?, int?>((int?) res.Ranges.First().From, (int?) res.Ranges.First().To);
+			}
+			catch (Exception e)
+			{
+				log.Error(e);
+				return new Tuple<int?, int?>(null,null);
+			}
 		}
 
-		private static void GenerateFileContent(Stream stream, int? startOffset, int? endOffset)
+		private static async Task GenerateFileContent(Stream stream, int? startOffset, int? endOffset)
 		{
-			if (startOffset == null && endOffset == null) return;
+			log.Debug("GenerateFileContent hit");
+			if (startOffset == null && endOffset == null || startOffset == 0 && endOffset == 0)
+				await WriteWholeFile(stream);
 			if (startOffset == null)
 				startOffset = TotalFileLength - endOffset;
 			if (endOffset == null)
 				endOffset = TotalFileLength;
 
-			var stub = new byte[(int) (endOffset - startOffset)];
-			var rand = new Random();
-			rand.NextBytes(stub);
+			var bytesWritten = 0;
 
-			if (AnyHintWithinRange(startOffset, endOffset))
-				WriteHint(stream, startOffset, endOffset);
+			var buffer = new byte[bufferSize];
+			var rand = new Random();
+			int hintIndex;
+
+			log.Debug(string.Format("Requested range: {0} - {1}", startOffset, endOffset));
+
+			while (bytesWritten < endOffset - startOffset)
+			{
+				rand.NextBytes(buffer);
+
+				if (AnyHintWithinRange(startOffset + bytesWritten, startOffset + bytesWritten + bufferSize, out hintIndex))
+				{
+					var writeHintFrom = HintOffsets[hintIndex] % bufferSize;
+					var writeHintUpTo = Math.Min(Encoding.UTF8.GetBytes(Hints[hintIndex]).Length,
+						bufferSize - writeHintFrom - 1);
+					var source = Encoding.UTF8.GetBytes(Hints[hintIndex]);
+					Buffer.BlockCopy(source, 0, buffer, writeHintFrom, writeHintUpTo);
+					log.Debug(String.Format("Writing hint # {0} from {1} offset. Buffer content: {2}", hintIndex, HintOffsets[hintIndex],
+					Encoding.UTF8.GetString(buffer)));
+				}
+
+				await stream.WriteAsync(buffer, 0, buffer.Length);
+
+				bytesWritten += bufferSize;
+			}
+
+			stream.Close();
+		}
+
+		private static async Task WriteWholeFile(Stream stream)
+		{
+			log.Debug("WriteWholeFile hit");
+			var bytesWritten = 0;
+
+			var buffer = new byte[bufferSize];
+			var rand = new Random();
+			int hintIndex;
+
+			log.Debug(string.Format("TotalFileLength: {0}", TotalFileLength));
+
+			while (bytesWritten < TotalFileLength)
+			{
+				rand.NextBytes(buffer);
+
+				if (AnyHintWithinRange(bytesWritten, bytesWritten + bufferSize, out hintIndex))
+				{
+					var writeHintFrom = HintOffsets[hintIndex] % bufferSize;
+					var writeHintUpTo = Math.Min(Encoding.UTF8.GetBytes(Hints[hintIndex]).Length,
+						bufferSize - writeHintFrom - 1);
+					var source = Encoding.UTF8.GetBytes(Hints[hintIndex]);
+					Buffer.BlockCopy(source, 0, buffer, writeHintFrom, writeHintUpTo);
+					log.Debug(String.Format("Writing hint # {0} from {1} offset. Buffer content: {2}", hintIndex, HintOffsets[hintIndex],
+					Encoding.UTF8.GetString(buffer)));
+				}
+
+				await stream.WriteAsync(buffer, 0, buffer.Length);
+
+				bytesWritten += bufferSize;
+			}
+			
+			stream.Close();
 		}
 
 		private static void WriteHint(Stream stream, int? startOffset, int? endOffset)
@@ -94,26 +158,38 @@ namespace RServer
 			throw new NotImplementedException();
 		}
 
-		private static bool AnyHintWithinRange(int? startOffset, int? endOffset)
+		private static bool AnyHintWithinRange(int? startOffset, int? endOffset, out int hintIndex)
 		{
-			throw new NotImplementedException();
+			hintIndex = -1;
+			for (var i = 0; i < HintOffsets.Count; i++)
+			{
+				if (startOffset <= HintOffsets[i] && HintOffsets[i] <= endOffset)
+				{
+					hintIndex = i;
+					return true;
+				}
+			}
+			return false;
 		}
 
 		private static void InitHintsOffsets()
 		{
 			// Нужно растянуть подсказки так, чтобы за час, или даже четыре, их было нереально докачать. 
 			// Соответственно, последняя подсказка должна быть дальше, чем:
-			// DownloadSpeedBytesPerSecond * 3600 * 4 (bytes)
+			// DownloadSpeedBytesPerSecond * 3600 * 3 (bytes)
 			// В соответствии с задумкой располагать данные через увеличивающиеся промежутки трэша, то есть: +-+--+----+--------+...
 			// получаем, что нужно найти степень двойки >= чем наш последний оффсет:
 
-			const int minimumLastOffset = DownloadSpeedBytesPerSecond*3600*4;
+			//const int minimumLastOffset = DownloadSpeedBytesPerSecond*3600; //todo: make it long!
+			//log.Debug(string.Format("minimumLastOffset: {0}", minimumLastOffset));
 
-			var numberOfOffsets = (int) Math.Ceiling(Math.Log(minimumLastOffset) / Math.Log(2));
+			var numberOfOffsets = 24;// todo: (int) Math.Ceiling(Math.Log(minimumLastOffset) / Math.Log(2));
 			var spacing = Encoding.UTF8.GetBytes(FirstHints[0]).Length;
 			var rand = new Random();
 
-			for (var i = 0; i < numberOfOffsets; i++)
+			HintOffsets.Add(0);
+
+			for (var i = 0; i < numberOfOffsets - 1; i++)
 			{
 				var nextOffset = (int) (spacing*Math.Pow(2, i));
 				HintOffsets.Add(nextOffset);
@@ -123,6 +199,8 @@ namespace RServer
 				//Console.WriteLine(Hints[i]);
 				log.Info(i + ": " +  Hints[i]);
 			}
+
+			Hints.Add(Flag);
 
 			TotalFileLength = HintOffsets[numberOfOffsets - 1] + Encoding.UTF8.GetBytes(Hints[numberOfOffsets - 1]).Length;
 		}
@@ -138,6 +216,8 @@ namespace RServer
 			"Hope you're young enough for this game: you'll jump a lot! See {0}",
 		};
 
+		private static string Flag = "Congrats! Here is your flag: THISWASEASYIFYOUKNOWABOUTHTTPRANGEHEADER";
+
 		private static string[] HintsPool = new[]
 		{
 			"Now see {0}",
@@ -146,5 +226,6 @@ namespace RServer
 		};
 
 		private static int TotalFileLength;
+		private static int bufferSize = 1024;
 	}
 }
