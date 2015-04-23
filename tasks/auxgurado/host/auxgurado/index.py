@@ -2,12 +2,11 @@ from bottle import route, request, view, static_file, run
 import serial
 
 DEBUG = True
-HOST = "localhost"
+HOST = "0.0.0.0"
 PORT = 16780
 
-COMPORT = 5
+COMPORT = 4
 BAUDRATE = 38400
-
 
 @route('/static/<filename>')
 def server_static(filename):
@@ -28,6 +27,7 @@ def do_answer():
         answer = "Please write in ASCII and don't get too long."
     else:
         answer = get_answer(question)
+    print(question)
     return {'answer': answer}
 
 
@@ -47,7 +47,7 @@ def get_answer(question):
 
     answer = 'I cannot answer you now'
     try:
-        ser.write((question + '\r\n').encode('ascii'))
+        ser.write(question.encode('utf-8') + b'\r')
         line = ser.readline()
 
         if len(line) > 0:
