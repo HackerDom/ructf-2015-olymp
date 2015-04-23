@@ -5,6 +5,8 @@ using System.Net;
 using System.Text;
 using System.Threading;
 using Born2Code.Net;
+using log4net;
+using log4net.Config;
 
 namespace RServer
 {
@@ -12,9 +14,12 @@ namespace RServer
 	{
 		private static HttpListener listener;
 		private const int DownloadSpeedBytesPerSecond = 100 * 1024 / 8; // 100Kb/sec
+		private static ILog log;
 
 		private static void Main(string[] args)
 		{
+			XmlConfigurator.ConfigureAndWatch(new FileInfo(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "log.config.xml")));
+			log = LogManager.GetLogger(typeof (Program));
 			var port = args.Length == 0 ? 9090 : int.Parse(args[0]);
 			listener = new HttpListener();
 			listener.Prefixes.Add(string.Format("http://+:{0}/secret/", port));
@@ -39,6 +44,7 @@ namespace RServer
 							var throttledStream = new ThrottledStream(ctx.Response.OutputStream, DownloadSpeedBytesPerSecond);
 							var range = GetRequestedRange(ctx.Request);
 							GenerateFileContent(throttledStream, range.Item1, range.Item2);
+							
 							Console.WriteLine("Written to client {0}	{1}", context.Request.RemoteEndPoint, ctx.Request.RawUrl);
 						}
 						finally
@@ -89,13 +95,13 @@ namespace RServer
 
 		private static void InitHintsOffsets()
 		{
-			// Нужно растянуть подсказки так, чтобы за час, или даже два, их было нереально докачать. 
+			// Нужно растянуть подсказки так, чтобы за час, или даже четыре, их было нереально докачать. 
 			// Соответственно, последняя подсказка должна быть дальше, чем:
-			// DownloadSpeedBytesPerSecond * 3600 * 2 (bytes)
+			// DownloadSpeedBytesPerSecond * 3600 * 4 (bytes)
 			// В соответствии с задумкой располагать данные через увеличивающиеся промежутки трэша, то есть: +-+--+----+--------+...
 			// получаем, что нужно найти степень двойки >= чем наш последний оффсет:
 
-			const int minimumLastOffset = DownloadSpeedBytesPerSecond*3600*2;
+			const int minimumLastOffset = DownloadSpeedBytesPerSecond*3600*4;
 
 			var numberOfOffsets = (int) Math.Ceiling(Math.Log(minimumLastOffset) / Math.Log(2));
 			var spacing = Encoding.UTF8.GetBytes(FirstHints[0]).Length;
@@ -108,7 +114,8 @@ namespace RServer
 				var nextHint = i < 4 ? FirstHints[i] : HintsPool[rand.Next(HintsPool.Length)];
 				
 				Hints.Add(string.Format(nextHint, nextOffset));
-				Console.WriteLine(Hints[i]);
+				//Console.WriteLine(Hints[i]);
+				log.Info(i + ": " +  Hints[i]);
 			}
 
 			TotalFileLength = HintOffsets[numberOfOffsets - 1] + Encoding.UTF8.GetBytes(Hints[numberOfOffsets - 1]).Length;
@@ -129,7 +136,7 @@ namespace RServer
 		{
 			"Now see {0}",
 			"Then see {0}",
-			"Please see{0}"
+			"Please see {0}"
 		};
 
 		private static int TotalFileLength;
