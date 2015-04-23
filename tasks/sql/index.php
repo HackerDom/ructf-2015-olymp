@@ -2,8 +2,8 @@
 error_reporting(0);
 
 define("sqlHost", "127.0.0.1");
-define("sqlUser", "root");
-define("sqlPass", "vertrigo");
+define("sqlUser", "ructf");
+define("sqlPass", "ctj2710__LLKSAET");
 define("sqlDbName", "sqli");
 $sqlUsers = "hamsters";
 $sqlTrans = "transact";
@@ -56,49 +56,78 @@ while ($row = mysql_fetch_assoc($result)) {
 	<meta http-equiv="Cache-Control" content="no-cache"/>
 	<title>31337 Investments</title>
 	
-	<link type="text/css" href="css/jquery.simple-dtpicker.css" rel="stylesheet" />	
+	<link href="css/jquery.simple-dtpicker.css" type="text/css" rel="stylesheet" />
+	<link rel="stylesheet" type="text/css" href="css/bootstrap.css">
+	<link rel="stylesheet" type="text/css" href="css/dashboard.css">
 	
 	<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
 	<script type="text/javascript" src="js/jquery.simple-dtpicker.js"></script>
 </head>
 <body>
-<div class="x">
-	Ваш баланс: <?php echo $balance; ?> руб<br>
+<div class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+    <div class="container">
+        <div class="navbar-header">
+            <span class="navbar-brand">31337 Investments</span>
+        </div>
+        <div class="navbar-collapse collapse">
+            <ul class="nav navbar-nav navbar-left">
+                <li class="active"><a href="/">Home</a></li>
+			</ul>
+			<span class="navbar-form navbar-right">
+                <button class="btn btn-success" onclick="alert('Уважаемые клиенты!\nСообщаем, что вывод средств временно не работает.')">Вывести</button>
+            </span>
+            <span class="navbar-form navbar-right">
+                <button class="btn btn-success" onclick="alert('Для пополнения баланса отправьте сумму на bitcoin address 15UYRmpTtZCsYufi4SpuVJbGkusygdvls2')">Пополнить</button>
+            </span>
+        </div>
+    </div>
 </div>
-<div class="x">
-	<input type="submit" onclick="alert('Для пополнения баланса отправьте сумму на bitcoin address 15UYRmpTtZCsYufi4SpuVJbGkusygdvls2')" value="Пополнить баланс">
-	<input type="submit" onclick="alert('Уважаемые клиенты!\nСообщаем, что вывод средств временно не работает.\nПочиним в кратчайшие сроки, простите, извините')" value="Вывести">
-</div>
-<div class="x">
-	<form method="POST">
-	История счета за период: 
-	<input type="text" id="range_from" name="from">
-	<input type="text" id="range_to" name="to">
-	<script type="text/javascript">
-		$(function(){
-			$('#range_from').appendDtpicker({"closeOnSelected": true});
-			$('#range_to').appendDtpicker({"closeOnSelected": true});
-		});
-	</script>
-	<input type="submit" name="history" value="Показать">
-	</form>
-</div>
-<div class="x">
-	Доходность счета за период: <?php echo $yield; ?> руб
-</div>
-<div class="x">
-	История транзакций:
-	<table border="1">
-	<tr><th>№</th><th>Операция</th><th>Сумма</th><th>Процент</th><th>Дата</th></tr>
-	<?php
-		function td($arr) {
-			return "<td>".implode("</td><td>", $arr)."</td>";
-		}
-		for ($i = 0; $i < count($trans); ++$i) {
-			echo "<tr>".td(array($i+1, $trans[$i]["type"], $trans[$i]["value"], $trans[$i]["percent"], $trans[$i]["date"]))."</tr>\r\n";
-		}
-	?>
-	</table>
+<div class="container-fluid">
+	<div class="row">
+		<div class="col-lg-12 col-md-12 col-sm-6 well">
+			<h4>Ваш баланс: <?php echo $balance; ?> руб</h4>
+		</div>
+    </div>
+
+	<div class="row">
+	<div class="panel panel-default">
+		<div class="panel-heading">
+			<form method="POST">
+				<h4>История счета за период:</h4>
+				<input type="text" id="range_from" name="from">
+				<input type="text" id="range_to" name="to">
+				<script type="text/javascript">
+					$(function(){
+						$('#range_from').appendDtpicker({"closeOnSelected": true});
+						$('#range_to').appendDtpicker({"closeOnSelected": true});
+					});
+				</script>
+				<input type="submit" name="history" value="Показать">
+			</form>
+		</div>
+		<div class="panel-body">
+			<h4>Доходность счета: <?php echo $yield; ?> руб</h4>
+			<table class="table table-bordered">
+				<thead>
+					<tr><th>№</th><th>Операция</th><th>Сумма</th><th>Процент</th><th>Дата</th></tr>
+				</thead>
+				<tbody>
+					<?php
+						function td($arr) {
+							return "<td>".implode("</td><td>", $arr)."</td>";
+						}
+						for ($i = 0; $i < count($trans); ++$i) {
+							echo "<tr class=\"success\">".
+								td(array($i+1, $trans[$i]["type"], $trans[$i]["value"],
+									$trans[$i]["percent"], $trans[$i]["date"])).
+								"</tr>\r\n";
+						}
+					?>
+				</tbody>
+			</table>
+		</div>
+	</div>
+	</div>
 </div>
 </body>
 </html>

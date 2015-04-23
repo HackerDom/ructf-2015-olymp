@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <quest series="inv" id="inv:100" proto="xmlquest-2.0">
     <name>31337 Investments</name>
-	<task type="html" lang="en">We were able to intercept a private user data on <a href="index.php">site</a> of investments PHPSESSID=123. Help us get the hash administrator password.</task>
-    <task type="html" lang="ru">Нам удалось перехватить данные пользователя одной приватной <a href="index.php">площадки</a> по инвестициям PHPSESSID=123. Помогите нам получить хеш администраторского пароля.</task>
+	<task type="html" lang="en">We were able to intercept a private user data on <a href="index.php">site</a> of investments PHPSESSID=642tssb99cmj3q6a3cifta2557. Help us get the hash administrator password.</task>
+    <task type="html" lang="ru">Нам удалось перехватить данные пользователя одной приватной <a href="index.php">площадки</a> по инвестициям PHPSESSID=642tssb99cmj3q6a3cifta2557. Помогите нам получить хеш администраторского пароля.</task>
     <checker strict="yes">
-        <solution case="sensitive"></solution>
+        <solution case="sensitive">a794e07ce2c330e2cdb5c28d9c97362e</solution>
     </checker>
 </quest>
