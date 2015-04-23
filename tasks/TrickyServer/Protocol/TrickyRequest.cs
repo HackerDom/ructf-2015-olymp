@@ -22,7 +22,6 @@ namespace Protocol
 			Packer.PackBinary(Encoding.ASCII.GetBytes(Headers.ToString()), stream);
 			Packer.PackInt64(Date.ToBinary(), stream);
 			Packer.PackBinary(Encoding.ASCII.GetBytes(FileName), stream);
-			Packer.PackBinary(Encoding.UTF8.GetBytes(FileName), stream);
 			Packer.PackBinary(FileContent, stream);
 			var crc = Packer.GetCheckSum(stream, startPosition, (int)(stream.Length - startPosition));
 			Packer.PackInt32(crc, stream);

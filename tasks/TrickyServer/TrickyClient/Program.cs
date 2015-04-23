@@ -40,12 +40,11 @@ namespace TrickyClient
 			var secondCorrectRequest = new TrickyRequest(headers, DateTime.Now, fileName2, File.ReadAllBytes(fileName2));
 			SendRequest(secondCorrectRequest);
 
-			var incorrectRequest = new TrickyRequest(headers, DateTime.Now, fileName1, null);
+			var incorrectRequest = new TrickyRequest(headers, DateTime.Now, fileName1, File.ReadAllBytes(fileName1));
 			SendRequest(incorrectRequest);
 
-			//todo: add some trash here
-
-			SendRequest(secondCorrectRequest);
+			var incorrectRequest2 = new TrickyRequest(headers, DateTime.Now, fileName2, File.ReadAllBytes(fileName2));
+			SendRequest(incorrectRequest2);
 
 		}
 
