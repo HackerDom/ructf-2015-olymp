@@ -66,7 +66,7 @@ complete
 do_guess.3:
 
 	getl #0
-	subl @1, 0x30000000
+	subl @1, 0x33333333
 	andq @1, @1
 	
 	js @1, do_guess.m0
@@ -77,7 +77,7 @@ complete
 do_guess.4:
 
 	getl #0
-	subl @1, 0x60000000
+	subl @1, 0x66666666
 	andq @1, @1
 	
 	js @1, do_guess.m1
@@ -88,7 +88,7 @@ complete
 do_guess.5:
 
 	getl #0
-	subl @1, 0x90000000
+	subl @1, 0x99999999
 	andq @1, @1
 	
 	js @1, do_guess.m2
@@ -99,7 +99,7 @@ complete
 do_guess.6:
 
 	getl #0
-	subl @1, 0xC0000000
+	subl @1, 0xCCCCCCCC
 	andq @1, @1
 	
 	js @1, do_guess.m3
@@ -110,7 +110,7 @@ complete
 do_guess.7:
 
 	getl #0
-	subl @1, 0xC0000000
+	subl @1, 0xCCCCCCCC
 	andq @1, @1
 	
 	jne @1, do_guess.m4
