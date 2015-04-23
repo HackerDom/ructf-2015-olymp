@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Net;
 using System.Text;
-using System.Threading;
+using System.Threading.Tasks;
 using Born2Code.Net;
 using log4net;
 using log4net.Config;
@@ -12,7 +12,6 @@ namespace RServer
 {
 	public class Program
 	{
-		private static HttpListener listener;
 		private const int DownloadSpeedBytesPerSecond = 100 * 1024 / 8; // 100Kb/sec
 		private static ILog log;
 
@@ -21,44 +20,51 @@ namespace RServer
 			XmlConfigurator.ConfigureAndWatch(new FileInfo(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "log.config.xml")));
 			log = LogManager.GetLogger(typeof (Program));
 			var port = args.Length == 0 ? 9090 : int.Parse(args[0]);
-			listener = new HttpListener();
-			listener.Prefixes.Add(string.Format("http://+:{0}/secret/", port));
-			listener.Start();
 
 			InitHintsOffsets();
 
-			var timers = new List<Timer>();
-
-			while (true)
+			try
 			{
-				try
+				var listener = new Listener(port, "/secret", OnContextAsync);
+				listener.Start();
+
+				log.InfoFormat("Server started listening on port {0}", port);
+				var delayMs = 0;
+
+				while (true)
 				{
-					var context = listener.GetContext();
-					Console.WriteLine("Accepted client {0}", context.Request.RemoteEndPoint);
-					timers.Add(new Timer(state =>
-					{
-						var ctx = (HttpListenerContext) state;
-						try
-						{
-							Console.WriteLine("Processing client {0}	{1}", context.Request.RemoteEndPoint, ctx.Request.RawUrl);
-							var throttledStream = new ThrottledStream(ctx.Response.OutputStream, DownloadSpeedBytesPerSecond);
-							var range = GetRequestedRange(ctx.Request);
-							GenerateFileContent(throttledStream, range.Item1, range.Item2);
-							
-							Console.WriteLine("Written to client {0}	{1}", context.Request.RemoteEndPoint, ctx.Request.RawUrl);
-						}
-						finally
-						{
-							ctx.Response.Close();
-							Console.WriteLine("Processed client {0}	{1}", context.Request.RemoteEndPoint, ctx.Request.RawUrl);
-						}
-					}, context, 0, Timeout.Infinite));
-				}
-				catch (Exception e)
-				{
-					Console.Error.WriteLine(e);
+					//var timeToSleepString = Console.ReadLine();
+					//int timeToSleep;
+					//if (int.TryParse(timeToSleepString, out timeToSleep))
+					//	delayMs = timeToSleep;
+					//else
+					//	Console.WriteLine("Couldn't parse \"{0}\" as valid int.", timeToSleepString);
+					//log.InfoFormat("Delay is {0} ms", delayMs);
 				}
 			}
+			catch (Exception e)
+			{
+				log.Fatal(e);
+				throw;
+			}
+		}
+
+		private static async Task OnContextAsync(HttpListenerContext context)
+		{
+			log.Debug("OnContextAsync hit");
+			var requestId = Guid.NewGuid();
+			var query = context.Request.QueryString["query"];
+			var remoteEndPoint = context.Request.RemoteEndPoint;
+			log.DebugFormat("{0}: received {1} from {2}", requestId, query, remoteEndPoint);
+			context.Request.InputStream.Close();
+
+			//var throttledStream = new ThrottledStream(context.Response.OutputStream, DownloadSpeedBytesPerSecond);
+			//var range = GetRequestedRange(context.Request);
+			//GenerateFileContent(throttledStream, range.Item1, range.Item2);
+			var bytes = Encoding.UTF8.GetBytes("Gochya!");
+
+			await context.Response.OutputStream.WriteAsync(bytes, 0, bytes.Length); //todo!!
+			context.Response.OutputStream.Close();
 		}
 
 		private static Tuple<int?, int?> GetRequestedRange(HttpListenerRequest request)
