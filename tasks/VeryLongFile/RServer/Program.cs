@@ -78,98 +78,71 @@ namespace RServer
 			}
 		}
 
-		private static async Task GenerateFileContent(Stream stream, int? startOffset, int? endOffset)
+		private static async Task GenerateFileContent(Stream stream, int? from, int? to)
 		{
-			log.Debug("GenerateFileContent hit");
-			if (startOffset == null && endOffset == null || startOffset == 0 && endOffset == 0)
-				await WriteWholeFile(stream);
-			if (startOffset == null)
-				startOffset = TotalFileLength - endOffset;
-			if (endOffset == null)
+			int startOffset;
+			int endOffset;
+			if (from == null)
+				if (to == null)
+					startOffset = 0;
+				else
+					startOffset = TotalFileLength - to ?? 0;
+			else
+				startOffset = from ?? 0;
+
+			if (from == null)
 				endOffset = TotalFileLength;
-
-			var bytesWritten = 0;
-
-			var buffer = new byte[bufferSize];
-			var rand = new Random();
-			int hintIndex;
+			else
+				endOffset = to ?? TotalFileLength;
 
 			log.Debug(string.Format("Requested range: {0} - {1}", startOffset, endOffset));
 
-			while (bytesWritten < endOffset - startOffset)
+			byte onebyte;
+
+			for (var i = startOffset; i <= endOffset; i++)
 			{
-				rand.NextBytes(buffer);
-
-				if (AnyHintWithinRange(startOffset + bytesWritten, startOffset + bytesWritten + bufferSize, out hintIndex))
-				{
-					var writeHintFrom = HintOffsets[hintIndex] % bufferSize;
-					var writeHintUpTo = Math.Min(Encoding.UTF8.GetBytes(Hints[hintIndex]).Length,
-						bufferSize - writeHintFrom - 1);
-					var source = Encoding.UTF8.GetBytes(Hints[hintIndex]);
-					Buffer.BlockCopy(source, 0, buffer, writeHintFrom, writeHintUpTo);
-					log.Debug(String.Format("Writing hint # {0} from {1} offset. Buffer content: {2}", hintIndex, HintOffsets[hintIndex],
-					Encoding.UTF8.GetString(buffer)));
-				}
-
-				await stream.WriteAsync(buffer, 0, buffer.Length);
-
-				bytesWritten += bufferSize;
+				onebyte = GetByteByIndex(i);
+				log.Debug(string.Format("i# {0} onebyte: {1} is {2}", i, onebyte, Encoding.UTF8.GetString(new []{onebyte})));
+				await stream.WriteAsync( new[]{onebyte}, 0, 1);
 			}
 
 			stream.Close();
 		}
 
-		private static async Task WriteWholeFile(Stream stream)
+		private static byte GetByteByIndex(int i)
 		{
-			log.Debug("WriteWholeFile hit");
-			var bytesWritten = 0;
-
-			var buffer = new byte[bufferSize];
-			var rand = new Random();
 			int hintIndex;
-
-			log.Debug(string.Format("TotalFileLength: {0}", TotalFileLength));
-
-			while (bytesWritten < TotalFileLength)
+			if (AnyHintContentOnByte(i, out hintIndex))
 			{
-				rand.NextBytes(buffer);
-
-				if (AnyHintWithinRange(bytesWritten, bytesWritten + bufferSize, out hintIndex))
-				{
-					var writeHintFrom = HintOffsets[hintIndex] % bufferSize;
-					var writeHintUpTo = Math.Min(Encoding.UTF8.GetBytes(Hints[hintIndex]).Length,
-						bufferSize - writeHintFrom - 1);
-					var source = Encoding.UTF8.GetBytes(Hints[hintIndex]);
-					Buffer.BlockCopy(source, 0, buffer, writeHintFrom, writeHintUpTo);
-					log.Debug(String.Format("Writing hint # {0} from {1} offset. Buffer content: {2}", hintIndex, HintOffsets[hintIndex],
-					Encoding.UTF8.GetString(buffer)));
-				}
-
-				await stream.WriteAsync(buffer, 0, buffer.Length);
-
-				bytesWritten += bufferSize;
+				var bytes = Encoding.UTF8.GetBytes(Hints[hintIndex]);
+				return bytes[i - HintOffsets[hintIndex]];
 			}
-			
-			stream.Close();
+			return HashOf(i);
 		}
 
-		private static void WriteHint(Stream stream, int? startOffset, int? endOffset)
-		{
-			throw new NotImplementedException();
-		}
-
-		private static bool AnyHintWithinRange(int? startOffset, int? endOffset, out int hintIndex)
+		private static bool AnyHintContentOnByte(int byteNumber, out int hintIndex)
 		{
 			hintIndex = -1;
-			for (var i = 0; i < HintOffsets.Count; i++)
+			for (var i = 0; i < Hints.Count; i++)
 			{
-				if (startOffset <= HintOffsets[i] && HintOffsets[i] <= endOffset)
+				if (HintOffsets[i] <= byteNumber && byteNumber < HintOffsets[i] + Encoding.UTF8.GetBytes(Hints[i]).Length)
 				{
 					hintIndex = i;
 					return true;
 				}
 			}
 			return false;
+		}
+
+		private static byte HashOf(int i)
+		{
+			var bytes = BitConverter.GetBytes(i);
+			byte oneByte = 0; 
+			foreach (var b in bytes)
+			{
+				oneByte ^= b;
+			}
+			return oneByte;
 		}
 
 		private static void InitHintsOffsets()
@@ -191,7 +164,7 @@ namespace RServer
 
 			for (var i = 0; i < numberOfOffsets - 1; i++)
 			{
-				var nextOffset = (int) (spacing*Math.Pow(2, i));
+				var nextOffset = (int) (spacing* (Math.Pow(2, i) + 1));
 				HintOffsets.Add(nextOffset);
 				var nextHint = i < 4 ? FirstHints[i] : HintsPool[rand.Next(HintsPool.Length)];
 				
