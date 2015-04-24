@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <quest series="trickyserver" id="trickyserver:1" proto="xmlquest-2.0">
     <name>What does it say?</name>
-    <task type="html" lang="en">We have a <a href="static/dump.pcap">dump</a> of client-server interaction, but unfortunately, the last server's response is missing. Find it please.</task>
-    <task type="html" lang="ru">К нам попал <a href="static/dump.pcap">дамп</a> трафика между сервером и клиентом, но последний ответ сервера потерялся. Найдите его!</task>
+    <task type="html" lang="en">We have a <a href='static/dump.pcap'>dump</a> of client-server interaction, but unfortunately, the last server's response is missing. Find it please.</task>
+    <task type="html" lang="ru">К нам попал <a href='static/dump.pcap'>дамп</a> трафика между сервером и клиентом, но последний ответ сервера потерялся. Найдите его!</task>
     <checker strict="yes">
         <solution case="insensitive">File with hash 25-47-A2-0D-59-52-8D-53-1D-46-21-41-0A-17-F3-A1-C3-85-68-F6-14-8C-BD-C6-59-FE-85-D2-99-B6-FF-48 already exists in our DB</solution>
         <solution case="insensitive">25-47-A2-0D-59-52-8D-53-1D-46-21-41-0A-17-F3-A1-C3-85-68-F6-14-8C-BD-C6-59-FE-85-D2-99-B6-FF-48</solution>
