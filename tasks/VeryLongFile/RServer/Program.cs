@@ -102,7 +102,8 @@ namespace RServer
 				for (var i = startOffset; i <= endOffset; i++)
 				{
 					var onebyte = GetByteByIndex(i);
-					//log.Debug(requestId + " " + string.Format("i# {0} onebyte: {1} is {2}", i, onebyte, Encoding.UTF8.GetString(new[] { onebyte })));
+					if (i % 100000 == 0)
+						log.Debug(string.Format("{0} {1} bytes sent", requestId, i));
 					await stream.WriteAsync(new[] {onebyte}, 0, 1);
 				}
 
@@ -110,7 +111,7 @@ namespace RServer
 			}
 			catch (Exception e)
 			{
-				log.Warn("The client probably canceled request: " + e);
+				log.Warn(string.Format("{0} The client probably canceled request: {1}", requestId, e));
 			}
 		}
 
