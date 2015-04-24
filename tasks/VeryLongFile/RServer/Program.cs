@@ -5,6 +5,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Http.Headers;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using Born2Code.Net;
 using log4net;
@@ -21,7 +22,7 @@ namespace RServer
 		{
 			XmlConfigurator.ConfigureAndWatch(new FileInfo(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "log.config.xml")));
 			log = LogManager.GetLogger(typeof (Program));
-			var port = args.Length > 0 ? int.Parse(args[0]) : 9090;
+			var port = args.Length > 0 ? int.Parse(args[0]) : 1337;
 			var numberOfThreads = args.Length > 1 ? int.Parse(args[1]) : 8;
 
 			InitHintsOffsets();
@@ -33,7 +34,10 @@ namespace RServer
 
 				log.InfoFormat("Server started listening on port {0}", port);
 
-				while (true) {}
+				while (true)
+				{
+					Thread.Sleep(Timeout.Infinite);
+				}
 			}
 			catch (Exception e)
 			{
@@ -149,6 +153,7 @@ namespace RServer
 				//if (byteNum % i == 0)
 					oneByte ^= bytes[i];
 			}
+			oneByte ^= Stub[byteNum%Stub.Length];
 			return oneByte;
 		}
 
@@ -171,7 +176,7 @@ namespace RServer
 
 			for (var i = 0; i < numberOfOffsets - 1; i++)
 			{
-				var nextOffset = (long) (spacing* (Math.Pow(2, i) + 1));
+				var nextOffset = (long) (spacing * 2 * (Math.Pow(2, i) + 1));
 				HintOffsets.Add(nextOffset);
 				var nextHint = i < 4 ? FirstHints[i] : HintsPool[rand.Next(HintsPool.Length)];
 				
@@ -189,19 +194,21 @@ namespace RServer
 
 		private static string[] FirstHints = new []
 		{
-			"Would you like to play a game? If so - look at {0} offset and we'll start!",
-			"I knew you would! Otherwise you were not here. Jump to {0}",
-			"Ok, let's warm up! Jump to {0}",
-			"Hope you're young enough for this game: you'll jump a lot! See {0}",
+			"Would you like to play a game? If so - look at {0} offset and we'll start!!!",
+			"I knew you would! Otherwise you were not here. Jump to {0}!!!",
+			"Ok, let's warm up! Jump to {0}!!!",
+			"Hope you're young enough for this game: you'll jump a lot! See {0}!!!",
 		};
 
-		private static string Flag = "Congrats! Here is your flag: THISWASEASYIFYOUKNOWABOUTHTTPRANGEHEADER";
+		private static string Flag = "Congrats! Here is your flag: THISWASEASYIFYOUKNOWABOUTHTTPRANGEHEADER!!!";
+
+		private static byte[] Stub = Encoding.UTF8.GetBytes("Россия и Франция, в ходе переговоров лидеров двух стран Владимира Путина и Франсуа Олланда, оказались как никогда близки к достижению договорённости о расторжении дорогостоящего контракта на поставку ВМФ РФ двух вертолётоносцев типа 'Мистраль'.");
 
 		private static string[] HintsPool = new[]
 		{
-			"Now see {0}",
-			"Then see {0}",
-			"Please see {0}"
+			"Now see {0}!!!",
+			"Then see {0}!!!",
+			"Please see {0}!!!"
 		};
 
 		private static long TotalFileLength;
