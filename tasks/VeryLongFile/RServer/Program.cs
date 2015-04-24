@@ -31,7 +31,6 @@ namespace RServer
 				listener.Start();
 
 				log.InfoFormat("Server started listening on port {0}", port);
-				var delayMs = 0;
 
 				while (true) {}
 			}
@@ -44,7 +43,6 @@ namespace RServer
 
 		private static async Task OnContextAsync(HttpListenerContext context)
 		{
-			log.Debug("OnContextAsync hit");
 			var requestId = Guid.NewGuid();
 			var query = context.Request.QueryString["query"];
 			var remoteEndPoint = context.Request.RemoteEndPoint;
@@ -52,64 +50,70 @@ namespace RServer
 			context.Request.InputStream.Close();
 
 			//var throttledStream = new ThrottledStream(context.Response.OutputStream, DownloadSpeedBytesPerSecond);
-			var range = GetRequestedRange(context.Request);
-			await GenerateFileContent(context.Response.OutputStream, range.Item1, range.Item2);			
+			var range = GetRequestedRange(context.Request, requestId);
+			await GenerateFileContent(context.Response.OutputStream, range.Item1, range.Item2, requestId);			
 		}
 
-		private static Tuple<int?, int?> GetRequestedRange(HttpListenerRequest request)
+		private static Tuple<long?, long?> GetRequestedRange(HttpListenerRequest request, Guid requestId)
 		{
 			try
 			{
-				log.Debug(string.Join(";", request.Headers.AllKeys));
-				var rangeHeader = request.Headers.AllKeys.Contains(HttpRequestHeader.Range.ToString())
-					? request.Headers[HttpRequestHeader.Range.ToString()]
-					: "";
+				log.Debug(requestId + " " + string.Join(";", request.Headers.AllKeys));
+				if (!request.Headers.AllKeys.Contains(HttpRequestHeader.Range.ToString()))
+					return new Tuple<long?, long?>(null, null);
+				var rangeHeader = request.Headers[HttpRequestHeader.Range.ToString()];
+
 
 				var res = RangeHeaderValue.Parse(rangeHeader);
-				log.Debug(string.Format("Range: {0}", res.Ranges.First().From));
 
 				//todo: поддерживаем только один диапазон?
-				return new Tuple<int?, int?>((int?) res.Ranges.First().From, (int?) res.Ranges.First().To);
+				return new Tuple<long?, long?>(res.Ranges.First().From, res.Ranges.First().To);
 			}
 			catch (Exception e)
 			{
 				log.Error(e);
-				return new Tuple<int?, int?>(null,null);
+				return new Tuple<long?, long?>(null,null);
 			}
 		}
 
-		private static async Task GenerateFileContent(Stream stream, int? from, int? to)
+		private static async Task GenerateFileContent(Stream stream, long? from, long? to, Guid requestId)
 		{
-			int startOffset;
-			int endOffset;
-			if (from == null)
-				if (to == null)
-					startOffset = 0;
-				else
-					startOffset = TotalFileLength - to ?? 0;
-			else
-				startOffset = from ?? 0;
-
-			if (from == null)
-				endOffset = TotalFileLength;
-			else
-				endOffset = to ?? TotalFileLength;
-
-			log.Debug(string.Format("Requested range: {0} - {1}", startOffset, endOffset));
-
-			byte onebyte;
-
-			for (var i = startOffset; i <= endOffset; i++)
+			try
 			{
-				onebyte = GetByteByIndex(i);
-				log.Debug(string.Format("i# {0} onebyte: {1} is {2}", i, onebyte, Encoding.UTF8.GetString(new []{onebyte})));
-				await stream.WriteAsync( new[]{onebyte}, 0, 1);
-			}
 
-			stream.Close();
+				long startOffset;
+				long endOffset;
+				if (from == null)
+					if (to == null)
+						startOffset = 0;
+					else
+						startOffset = TotalFileLength - to ?? 0;
+				else
+					startOffset = from ?? 0;
+
+				if (from == null)
+					endOffset = TotalFileLength;
+				else
+					endOffset = to ?? TotalFileLength;
+
+				log.Debug(requestId + " " + string.Format("Requested range: {0} - {1}", startOffset, endOffset));
+
+				for (var i = startOffset; i <= endOffset; i++)
+				{
+					var onebyte = GetByteByIndex(i);
+					//log.Debug(requestId + " " + string.Format("i# {0} onebyte: {1} is {2}", i, onebyte, Encoding.UTF8.GetString(new[] { onebyte })));
+					await stream.WriteAsync(new[] {onebyte}, 0, 1);
+				}
+
+				stream.Close();
+			}
+			catch (Exception e)
+			{
+				log.Warn("The client probably canceled request: " + e);
+			}
 		}
 
-		private static byte GetByteByIndex(int i)
+		private static byte GetByteByIndex(long i)
 		{
 			int hintIndex;
 			if (AnyHintContentOnByte(i, out hintIndex))
@@ -120,7 +124,7 @@ namespace RServer
 			return HashOf(i);
 		}
 
-		private static bool AnyHintContentOnByte(int byteNumber, out int hintIndex)
+		private static bool AnyHintContentOnByte(long byteNumber, out int hintIndex)
 		{
 			hintIndex = -1;
 			for (var i = 0; i < Hints.Count; i++)
@@ -134,7 +138,7 @@ namespace RServer
 			return false;
 		}
 
-		private static byte HashOf(int i)
+		private static byte HashOf(long i)
 		{
 			var bytes = BitConverter.GetBytes(i);
 			byte oneByte = 0; 
@@ -153,10 +157,10 @@ namespace RServer
 			// В соответствии с задумкой располагать данные через увеличивающиеся промежутки трэша, то есть: +-+--+----+--------+...
 			// получаем, что нужно найти степень двойки >= чем наш последний оффсет:
 
-			//const int minimumLastOffset = DownloadSpeedBytesPerSecond*3600; //todo: make it long!
-			//log.Debug(string.Format("minimumLastOffset: {0}", minimumLastOffset));
+			const long minimumLastOffset = DownloadSpeedBytesPerSecond*3600 * 5; 
+			log.Debug(string.Format("minimumLastOffset: {0}", minimumLastOffset));
 
-			var numberOfOffsets = 24;// todo: (int) Math.Ceiling(Math.Log(minimumLastOffset) / Math.Log(2));
+			var numberOfOffsets = (int) Math.Ceiling(Math.Log(minimumLastOffset) / Math.Log(2));
 			var spacing = Encoding.UTF8.GetBytes(FirstHints[0]).Length;
 			var rand = new Random();
 
@@ -164,12 +168,11 @@ namespace RServer
 
 			for (var i = 0; i < numberOfOffsets - 1; i++)
 			{
-				var nextOffset = (int) (spacing* (Math.Pow(2, i) + 1));
+				var nextOffset = (long) (spacing* (Math.Pow(2, i) + 1));
 				HintOffsets.Add(nextOffset);
 				var nextHint = i < 4 ? FirstHints[i] : HintsPool[rand.Next(HintsPool.Length)];
 				
 				Hints.Add(string.Format(nextHint, nextOffset));
-				//Console.WriteLine(Hints[i]);
 				log.Info(i + ": " +  Hints[i]);
 			}
 
@@ -178,7 +181,7 @@ namespace RServer
 			TotalFileLength = HintOffsets[numberOfOffsets - 1] + Encoding.UTF8.GetBytes(Hints[numberOfOffsets - 1]).Length;
 		}
 
-		private static List<int> HintOffsets = new List<int>();
+		private static List<long> HintOffsets = new List<long>();
 		private static List<string> Hints = new List<string>();
 
 		private static string[] FirstHints = new []
@@ -198,7 +201,6 @@ namespace RServer
 			"Please see {0}"
 		};
 
-		private static int TotalFileLength;
-		private static int bufferSize = 1024;
+		private static long TotalFileLength;
 	}
 }
