@@ -21,4 +21,7 @@ mysql --user=root --password=jvpsKJ__q2wm
 	insert...
 	GRANT SELECT ON sqli.* TO ructf;
 	exit	
-	
+
+nano /etc/php5/fpm/php.ini
+	session.gc_maxlifetime = 86400
+	session.cookie_lifetime = 86400
