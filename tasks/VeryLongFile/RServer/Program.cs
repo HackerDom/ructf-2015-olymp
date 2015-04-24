@@ -21,13 +21,14 @@ namespace RServer
 		{
 			XmlConfigurator.ConfigureAndWatch(new FileInfo(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "log.config.xml")));
 			log = LogManager.GetLogger(typeof (Program));
-			var port = args.Length == 0 ? 9090 : int.Parse(args[0]);
+			var port = args.Length > 0 ? int.Parse(args[0]) : 9090;
+			var numberOfThreads = args.Length > 1 ? int.Parse(args[1]) : 8;
 
 			InitHintsOffsets();
 
 			try
 			{
-				var listener = new Listener(port, "/secret", OnContextAsync);
+				var listener = new Listener(port, "/secret", numberOfThreads, OnContextAsync);
 				listener.Start();
 
 				log.InfoFormat("Server started listening on port {0}", port);
