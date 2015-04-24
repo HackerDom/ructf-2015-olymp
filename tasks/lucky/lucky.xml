@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <quest series="lucky" id="lucky:1" proto="xmlquest-2.0">
     <name>I'm feeling lucky!</name>
-    <task type="html" lang="en">Truth is out there. Find the key. "Super secure ninjas LLC" will help you. I've heard they are about to launch a web site. </a></task>
-    <task type="html" lang="ru">Истина где-то рядом. Найдите ключ. ООО "Супер ниндзя-безопасники" помогут тебе. Я слышал, что они собираются запустить свой сайт.</a></task>
+    <task type="html" lang="en">Truth is out there. Find the key. "Super secure ninjas LLC" will help you. I've heard they are about to launch a web site.</task>
+    <task type="html" lang="ru">Истина где-то рядом. Найдите ключ. ООО "Супер ниндзя-безопасники" помогут тебе. Я слышал, что они собираются запустить свой сайт.</task>
     <checker strict="yes">
         <solution case="insensitive">MRGOOGLERMASTER7</solution>
     </checker>

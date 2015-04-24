@@ -1,7 +1,7 @@
 from bottle import route, request, view, static_file, run
 import serial
 
-DEBUG = True
+DEBUG = False
 HOST = "0.0.0.0"
 PORT = 16780
 
@@ -27,7 +27,7 @@ def do_answer():
         answer = "Please write in ASCII and don't get too long."
     else:
         answer = get_answer(question)
-    print(question)
+    #print(question)
     return {'answer': answer}
 
 
