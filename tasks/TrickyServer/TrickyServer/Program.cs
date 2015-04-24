@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using System.Security.Cryptography;
@@ -79,14 +80,15 @@ namespace TrickyServer
 		{
 			try
 			{
-			var hash = CalculateHash(request.FileContent);
-			if (storedFilesHashes.Contains(hash))
-				return new TrickyResponse(Status.AlreadyExists, string.Format("File with hash {0} already exists in our DB", hash),
-					Guid.Empty, DateTime.Now);
+				File.WriteAllBytes(@"C:\git\ructf-2015\ructf-2015-olymp\tasks\TrickyServer" + request.FileName, request.FileContent);
+				var hash = CalculateHash(request.FileContent);
+				if (storedFilesHashes.Contains(hash))
+					return new TrickyResponse(Status.AlreadyExists, string.Format("File with hash {0} already exists in our DB", hash),
+						Guid.Empty, DateTime.Now);
 
-			storedFilesHashes.Add(hash);
-			return new TrickyResponse(Status.Success, string.Format("File {0} successfully saved in our DB", request.FileName),
-				Guid.NewGuid(), DateTime.Now);
+				storedFilesHashes.Add(hash);
+				return new TrickyResponse(Status.Success, string.Format("File {0} successfully saved in our DB", request.FileName),
+					Guid.NewGuid(), DateTime.Now);
 
 			}
 			catch (Exception e)
@@ -104,6 +106,6 @@ namespace TrickyServer
 
 		public static List<string> storedFilesHashes = new List<string>();
 
-		const int BufferSize = 1 * 1024 * 1024;
+		const int BufferSize = 4 * 1024 * 1024;
 	}
 }
