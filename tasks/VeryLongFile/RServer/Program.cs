@@ -140,13 +140,14 @@ namespace RServer
 			return false;
 		}
 
-		private static byte HashOf(long i)
+		private static byte HashOf(long byteNum)
 		{
-			var bytes = BitConverter.GetBytes(i);
+			var bytes = BitConverter.GetBytes(byteNum);
 			byte oneByte = 0; 
-			foreach (var b in bytes)
+			for (var i=0; i<bytes.Length; i+=3)
 			{
-				oneByte ^= b;
+				//if (byteNum % i == 0)
+					oneByte ^= bytes[i];
 			}
 			return oneByte;
 		}
