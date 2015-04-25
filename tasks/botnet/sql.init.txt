@@ -3,4 +3,4 @@ USE botnet;
 DROP TABLE IF EXISTS users;
 CREATE TABLE users ( id INT NOT NULL, name VARCHAR(32) NOT NULL, pass VARCHAR(32) NOT NULL, PRIMARY KEY (id), UNIQUE (name) );
 
-INSERT users (name,pass) VALUES ('admin', 'P@ssw0rd') ON DUPLICATE KEY UPDATE pass='P@ssw0rd';
+INSERT users (name,pass) VALUES ('admin', 'olympP@ssw0rd') ON DUPLICATE KEY UPDATE pass='olympP@ssw0rd';
