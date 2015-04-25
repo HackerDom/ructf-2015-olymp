@@ -1,1 +1,1 @@
-ping google.com
+ping ructf.org
